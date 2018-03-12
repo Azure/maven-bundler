@@ -48,6 +48,7 @@ To prepare the release with 2 maven release plugin commits, run
 mvn com.microsoft.azure:bundler-maven-plugin:prepare
 ```
 Argument properties must be appended in `-Dargument=value` format.
+
 | Property | Description |
 |----------|-------------|
 | `tag` | **Required.** The release tag on GitHub. |
@@ -76,6 +77,7 @@ mvn com.microsoft.azure:bundler-maven-plugin:bundle
 ```
 
 Argument properties may be appended in `-Dargument=value` format.
+
 | Property | Description |
 |----------|-------------|
 | `dest` | *Optional.* The output folder for bundled artifacts. Default to `output` directory in the command execution directory. |
