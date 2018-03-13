@@ -38,12 +38,12 @@ Add plugin:
     <artifactId>bundler-maven-plugin</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </plugin>
-<plugins>
+</plugins>
 ```
 
 ### Goal: prepare
 
-To prepare the release with 2 maven release plugin commits, run
+To prepare the release for a SNAPSHOT project with 2 maven release plugin commits, run
 ```bash
 mvn com.microsoft.azure:bundler-maven-plugin:prepare
 ```
@@ -82,9 +82,35 @@ Argument properties may be appended in `-Dargument=value` format.
 |----------|-------------|
 | `dest` | *Optional.* The output folder for bundled artifacts. Default to `output` directory in the command execution directory. |
 
+### Goal : stage
+
+For developers publishing to group IDs `com.microsoft.azure` or `com.microsoft.rest`, this goal is connected to the Jenkins server https://azuresdkci.cloudapp.net/ to easily run staging jobs.
+
+```bash
+mvn com.microsoft.azure:bundler-maven-plugin:stage
+```
+
+Argument properties must be appended in `-Dargument=value` format.
+
+| Property | Description |
+|----------|-------------|
+| `source` | **Required.** The source network location where artifacts are. |
+| `groupId` | **Required.** The group ID, starting with either `com.microsoft.azure` or `com.microsoft.rest`. |
+
+Examples:
+```bash
+mvn com.microsoft.azure:bundler-maven-plugin:stage -Dsource=\\\\scratch2\\scratch\\jianghlu\\release-100 -DgroupId=com.microsoft.azure
+```
+Will run the Jenkins job with location parameter set to `\\scratch2\scratch\jianghlu\release-100\`.
+
 ### Goal : auto
 
-To start an official release with Maven release plugin and bundle them together in one step, run `auto` goal. All arguments to both `prepare` and `bundle` goals are accepted. Between `prepare` and `bundle`, this command will checkout the release commit (through `git checkout HEAD~1`) and reset to head (through `git checkout -`) after bundling.
+To start an official release with Maven release plugin and bundle them together in one step, run `auto` goal. All arguments to both `prepare` and `bundle` goals are accepted. Between `prepare` and `bundle`, this command will checkout the release commit (through `git checkout HEAD~1`) and reset to head (through `git checkout -`) after bundling. Goal `prepare` will only be run for SNAPSHOT projects.
+
+To also run the stage goal for auto, set `-Dstage=true`.
+
+## Next steps
+Ideally we should be able to run `stage` goal without the dependency on Jenkins.
 
 ##  Contributing
 

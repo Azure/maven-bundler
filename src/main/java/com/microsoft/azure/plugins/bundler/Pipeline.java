@@ -6,20 +6,32 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Mojo(name = "auto", aggregator = true)
 public class Pipeline extends Preparer {
 
     @Parameter(property = "dest", defaultValue = "${session.executionRootDirectory}/output")
     private String dest;
 
+    @Parameter(property = "stage", defaultValue = "false")
+    private boolean stage;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        // Prepare
-        super.execute();
-        CommandRunner runner = new CommandRunner(this, super.session());
+        boolean isSnapshot = project().getVersion().endsWith("-SNAPSHOT");
 
-        // Checkout HEAD~1
-        runner.runCommand("git checkout HEAD~1");
+        CommandRunner runner = new CommandRunner(this, super.session());
+        if (isSnapshot) {
+            // Prepare
+            super.execute();
+
+            // Checkout HEAD~1
+            runner.runCommand("git checkout HEAD~1");
+        }
+
+        Set<String> groupIds = new HashSet<>();
 
         try {
             // Package
@@ -29,16 +41,28 @@ public class Pipeline extends Preparer {
             String version = super.project().getVersion().replace("-SNAPSHOT", "");
             Bundler bundler = new Bundler().setProject(super.project()).setDest(dest).setVersion(version);
             bundler.execute();
+            groupIds.add(super.project().getGroupId());
 
             for (MavenProject project : project().getCollectedProjects()) {
                 version = project.getVersion().replace("-SNAPSHOT", "");
                 bundler = new Bundler().setProject(project).setDest(dest).setVersion(version);
                 bundler.execute();
+                groupIds.add(project.getGroupId());
             }
 
         } finally {
-            // Checkout HEAD
-            runner.runCommand("git checkout -");
+            if (isSnapshot) {
+                // Checkout HEAD
+                runner.runCommand("git checkout -");
+            }
+        }
+
+        //Stage
+        if (stage) {
+            for (String groupId : groupIds) {
+                Stager stager = new Stager().setGroupId(groupId).setSource(dest + "\\" + groupId);
+                stager.execute();
+            }
         }
     }
 }

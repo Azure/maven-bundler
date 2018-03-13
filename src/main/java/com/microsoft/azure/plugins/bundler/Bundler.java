@@ -61,8 +61,8 @@ public class Bundler extends AbstractMojo {
             String user;
             char[] password;
             if (System.getProperty("domain") != null) {
-                domain = (String) System.getProperty("domain");
-                user = (String) System.getProperty("user");
+                domain = System.getProperty("domain");
+                user = System.getProperty("user");
                 password = System.getProperty("password").toCharArray();
             } else {
                 String specify = "Please specify `%s` for file share " + dest + ": ";
@@ -81,7 +81,6 @@ public class Bundler extends AbstractMojo {
             transferManager = new LocalTransferManager(dest, project.getGroupId());
         }
 
-        File output = getDirForGroupId(project.getGroupId());
         Path pomLocation = Paths.get(project.getBasedir().getPath(), "pom.xml");
         File[] artifacts = new File(project.getBasedir(), "target").listFiles(new FilenameFilter() {
             @Override
@@ -105,23 +104,6 @@ public class Bundler extends AbstractMojo {
         } catch (IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
-    }
-
-    /**
-     * Creates or fetches a directory for a group ID.
-     * @param groupId the Maven group ID
-     * @return the directory to put artifacts
-     */
-    private File getDirForGroupId(String groupId) {
-        File outputDir = new File(dest);
-        if (!outputDir.exists()) {
-            outputDir.mkdir();
-        }
-        File groupDir = new File(outputDir, groupId);
-        if (!groupDir.exists()) {
-            groupDir.mkdir();
-        }
-        return groupDir;
     }
 
     private void copyFile(Path source, Path target) throws IOException {

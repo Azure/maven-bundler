@@ -38,7 +38,7 @@ public class Preparer extends AbstractMojo {
         return project;
     }
 
-    @Parameter(required = true, property = "tag")
+    @Parameter(property = "tag")
     private String tag;
 
     @Parameter(property = "version")
@@ -52,6 +52,11 @@ public class Preparer extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+        if (!project.getVersion().endsWith("-SNAPSHOT")) {
+            throw new MojoFailureException("Prepare goal can only be run for SNAPSHOT projects");
+        } else if (tag == null) {
+            throw new MojoFailureException("Argument `tag` must be provided");
+        }
         CommandRunner runner = new CommandRunner(this, session);
         String prepareCmd = "mvn -B release:prepare -DpushChanges=false -Darguments=\"-DskipTests=true\" -Dresume=false";
         prepareCmd = prepareCmd + " -Dtag=" + tag;

@@ -25,6 +25,7 @@ public class SmbTransferManager implements FileTransferManager {
         }
         String fullPath = (dest + "\\" + groupId)
                 .replace("smb://", "")
+                .replace("\\\\", "")
                 .replace("/", "\\");
         server = fullPath.split("\\\\")[0];
         share = fullPath.split("\\\\")[1];
