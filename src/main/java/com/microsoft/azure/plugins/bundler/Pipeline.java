@@ -14,12 +14,16 @@ public class Pipeline extends Preparer {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        // Prepare
-        super.execute();
-        CommandRunner runner = new CommandRunner(this, super.session());
+        boolean isSnapshot = project().getVersion().endsWith("-SNAPSHOT");
 
-        // Checkout HEAD~1
-        runner.runCommand("git checkout HEAD~1");
+        CommandRunner runner = new CommandRunner(this, super.session());
+        if (isSnapshot) {
+            // Prepare
+            super.execute();
+
+            // Checkout HEAD~1
+            runner.runCommand("git checkout HEAD~1");
+        }
 
         try {
             // Package
@@ -37,8 +41,10 @@ public class Pipeline extends Preparer {
             }
 
         } finally {
-            // Checkout HEAD
-            runner.runCommand("git checkout -");
+            if (isSnapshot) {
+                // Checkout HEAD
+                runner.runCommand("git checkout -");
+            }
         }
     }
 }

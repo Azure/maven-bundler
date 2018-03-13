@@ -61,8 +61,8 @@ public class Bundler extends AbstractMojo {
             String user;
             char[] password;
             if (System.getProperty("domain") != null) {
-                domain = (String) System.getProperty("domain");
-                user = (String) System.getProperty("user");
+                domain = System.getProperty("domain");
+                user = System.getProperty("user");
                 password = System.getProperty("password").toCharArray();
             } else {
                 String specify = "Please specify `%s` for file share " + dest + ": ";

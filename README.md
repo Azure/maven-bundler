@@ -43,7 +43,7 @@ Add plugin:
 
 ### Goal: prepare
 
-To prepare the release with 2 maven release plugin commits, run
+To prepare the release for a SNAPSHOT project with 2 maven release plugin commits, run
 ```bash
 mvn com.microsoft.azure:bundler-maven-plugin:prepare
 ```
@@ -84,7 +84,7 @@ Argument properties may be appended in `-Dargument=value` format.
 
 ### Goal : auto
 
-To start an official release with Maven release plugin and bundle them together in one step, run `auto` goal. All arguments to both `prepare` and `bundle` goals are accepted. Between `prepare` and `bundle`, this command will checkout the release commit (through `git checkout HEAD~1`) and reset to head (through `git checkout -`) after bundling.
+To start an official release with Maven release plugin and bundle them together in one step, run `auto` goal. All arguments to both `prepare` and `bundle` goals are accepted. Between `prepare` and `bundle`, this command will checkout the release commit (through `git checkout HEAD~1`) and reset to head (through `git checkout -`) after bundling. Goal `prepare` will only be run for SNAPSHOT projects.
 
 ##  Contributing
 
