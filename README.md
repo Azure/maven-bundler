@@ -41,6 +41,14 @@ Add plugin:
 </plugins>
 ```
 
+The holy grail: 
+```bash
+mvn com.microsoft.azure:bundler-maven-plugin:auto -Dversion={release-version} -DdevVersion={next-dev-version} -Dtag={release-tag} -Ddest=\\\\scratch2\\scratch\\{my-alias}\\{project-name} -Dstage=true
+```
+This will run maven release plugin (if your project is on a SNAPSHOT version), bundle the artifacts in `\\scratch2\scrach\{my-alias}\{project-name}`, and then run the publish job on Jenkins.
+
+The individual goals are listed below.
+
 ### Goal: prepare
 
 To prepare the release for a SNAPSHOT project with 2 maven release plugin commits, run
@@ -84,7 +92,7 @@ Argument properties may be appended in `-Dargument=value` format.
 
 ### Goal : stage
 
-For developers publishing to group IDs `com.microsoft.azure` or `com.microsoft.rest`, this goal is connected to the Jenkins server https://azuresdkci.cloudapp.net/ to easily run staging jobs.
+For developers publishing to group IDs `com.microsoft.azure` or `com.microsoft.rest`, this goal is connected to the Jenkins server https://azuresdkci.cloudapp.net/ to easily run staging jobs. You will be prompted to enter your Jenkins user ID and API token, which can be fetched here: http://azuresdkci.cloudapp.net/me/configure.
 
 ```bash
 mvn com.microsoft.azure:bundler-maven-plugin:stage
