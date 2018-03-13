@@ -9,7 +9,7 @@ import org.apache.maven.project.MavenProject;
 @Mojo(name = "auto", aggregator = true)
 public class Pipeline extends Preparer {
 
-    @Parameter(defaultValue = "${session.executionRootDirectory}/output")
+    @Parameter(property = "dest", defaultValue = "${session.executionRootDirectory}/output")
     private String dest;
 
     @Override

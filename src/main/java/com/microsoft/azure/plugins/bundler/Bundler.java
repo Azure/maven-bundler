@@ -1,5 +1,8 @@
 package com.microsoft.azure.plugins.bundler;
 
+import com.microsoft.azure.plugins.bundler.io.FileTransferManager;
+import com.microsoft.azure.plugins.bundler.io.LocalTransferManager;
+import com.microsoft.azure.plugins.bundler.io.SmbTransferManager;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -29,7 +32,7 @@ public class Bundler extends AbstractMojo {
         return this;
     }
 
-    @Parameter(defaultValue = "${session.executionRootDirectory}/output", required = true)
+    @Parameter(property = "dest", defaultValue = "${session.executionRootDirectory}/output", required = true)
     private String dest;
 
     Bundler setDest(String dest) {
@@ -48,8 +51,36 @@ public class Bundler extends AbstractMojo {
     private boolean isWindows = System.getProperty("os.name")
             .toLowerCase().startsWith("windows");
 
+    private FileTransferManager transferManager;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+
+        if (isSmbDest(dest)) {
+            String domain;
+            String user;
+            char[] password;
+            if (System.getProperty("domain") != null) {
+                domain = (String) System.getProperty("domain");
+                user = (String) System.getProperty("user");
+                password = System.getProperty("password").toCharArray();
+            } else {
+                String specify = "Please specify `%s` for file share " + dest + ": ";
+                System.out.print(String.format(specify, "domain"));
+                domain = System.console().readLine();
+                System.out.print(String.format(specify, "user"));
+                user = System.console().readLine();
+                System.out.print(String.format(specify, "password"));
+                password = System.console().readPassword();
+                System.setProperty("domain", domain);
+                System.setProperty("user", user);
+                System.setProperty("password", new String(password));
+            }
+            transferManager = new SmbTransferManager(dest, project.getGroupId(), domain, user, password);
+        } else {
+            transferManager = new LocalTransferManager(dest, project.getGroupId());
+        }
+
         File output = getDirForGroupId(project.getGroupId());
         Path pomLocation = Paths.get(project.getBasedir().getPath(), "pom.xml");
         File[] artifacts = new File(project.getBasedir(), "target").listFiles(new FilenameFilter() {
@@ -62,12 +93,12 @@ public class Bundler extends AbstractMojo {
             getLog().info("============== Bundler =============");
             getLog().info("Copying POM: " + pomLocation);
             String pomFileName = String.format("%s-%s.pom", project.getArtifactId(), version);
-            Files.copy(pomLocation, Paths.get(output.getPath(), pomFileName), StandardCopyOption.REPLACE_EXISTING);
+            transferManager.copy(pomLocation, pomFileName);
 
             if (artifacts != null) {
                 for (File artifact : artifacts) {
                     getLog().info("Copying artifacts: " + artifact.getPath());
-                    Files.copy(Paths.get(artifact.getPath()), Paths.get(output.getPath(), artifact.getName()), StandardCopyOption.REPLACE_EXISTING);
+                    transferManager.copy(Paths.get(artifact.getPath()), artifact.getName());
                 }
             }
 
@@ -91,5 +122,13 @@ public class Bundler extends AbstractMojo {
             groupDir.mkdir();
         }
         return groupDir;
+    }
+
+    private void copyFile(Path source, Path target) throws IOException {
+        Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private boolean isSmbDest(String destPath) {
+        return destPath.startsWith("\\\\") || destPath.startsWith("smb://");
     }
 }
