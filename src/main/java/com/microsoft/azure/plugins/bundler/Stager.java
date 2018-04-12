@@ -17,12 +17,13 @@ import java.util.HashMap;
 
 @Mojo(name = "stage", aggregator = true)
 public class Stager extends AbstractMojo {
+    @Parameter(defaultValue="${settings}", readonly=true, required=true)
+    private Settings settings;
 
-    @Parameter(defaultValue="${settings.servers.azuresdkci.username}", readonly=true, required=true)
-    private String jenkinsUsername;
-
-    @Parameter(defaultValue="${settings.servers.azuresdkci.password}", readonly=true, required=true)
-    private String jenkinsPassword;
+    Stager setSettings(Settings settings) {
+        this.settings = settings;
+        return this;
+    }
 
     @Parameter(property = "source")
     private String source;
@@ -59,9 +60,9 @@ public class Stager extends AbstractMojo {
 
         String username;
         String password;
-        if (jenkinsUsername != null && jenkinsPassword != null) {
-            username = jenkinsUsername;
-            password = jenkinsPassword;
+        if (settings.getServer("azuresdkci").getUsername() != null && settings.getServer("azuresdkci").getPassword() != null) {
+            username = settings.getServer("azuresdkci").getUsername();
+            password = settings.getServer("azuresdkci").getPassword();
         }
         else if (System.getProperty("jenkinsUser") != null) {
             username = System.getProperty("jenkinsUser");

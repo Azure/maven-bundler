@@ -60,7 +60,7 @@ public class Pipeline extends Preparer {
         //Stage
         if (stage) {
             for (String groupId : groupIds) {
-                Stager stager = new Stager().setGroupId(groupId).setSource(dest + "\\" + groupId);
+                Stager stager = new Stager().setGroupId(groupId).setSource(dest + "\\" + groupId).setSettings(super.session().getSettings());
                 stager.execute();
             }
         }
