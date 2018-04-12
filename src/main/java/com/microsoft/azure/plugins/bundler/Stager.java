@@ -7,6 +7,8 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.Settings;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,6 +17,12 @@ import java.util.HashMap;
 
 @Mojo(name = "stage", aggregator = true)
 public class Stager extends AbstractMojo {
+
+    @Parameter(defaultValue="${settings.servers.azuresdkci.username}", readonly=true, required=true)
+    private String jenkinsUsername;
+
+    @Parameter(defaultValue="${settings.servers.azuresdkci.password}", readonly=true, required=true)
+    private String jenkinsPassword;
 
     @Parameter(property = "source")
     private String source;
@@ -51,7 +59,11 @@ public class Stager extends AbstractMojo {
 
         String username;
         String password;
-        if (System.getProperty("jenkinsUser") != null) {
+        if (jenkinsUsername != null && jenkinsPassword != null) {
+            username = jenkinsUsername;
+            password = jenkinsPassword;
+        }
+        else if (System.getProperty("jenkinsUser") != null) {
             username = System.getProperty("jenkinsUser");
             password = System.getProperty("jenkinsPassword");
         } else {
