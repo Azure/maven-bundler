@@ -26,7 +26,7 @@ public class CommandRunner {
                 .toLowerCase().startsWith("windows");
         ProcessBuilder pBuilder = new ProcessBuilder();
         if (isWindows) {
-            pBuilder.command("cmd.exe", "-c", command);
+            pBuilder.command("cmd.exe", "/c", command);
         } else {
             pBuilder.command("/bin/bash", "-c", command);
         }

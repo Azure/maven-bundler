@@ -21,9 +21,6 @@ import java.util.List;
  */
 @Mojo(name = "prepare" , aggregator = true)
 public class Preparer extends AbstractMojo {
-    private boolean isWindows = System.getProperty("os.name")
-            .toLowerCase().startsWith("windows");
-
     @Parameter(defaultValue = "${session}", readonly = true, required = true)
     private MavenSession session;
 
