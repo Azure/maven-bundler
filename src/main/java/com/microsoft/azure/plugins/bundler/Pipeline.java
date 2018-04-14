@@ -1,5 +1,6 @@
 package com.microsoft.azure.plugins.bundler;
 
+import com.google.common.base.Joiner;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -59,10 +60,8 @@ public class Pipeline extends Preparer {
 
         //Stage
         if (stage) {
-            for (String groupId : groupIds) {
-                Stager stager = new Stager().setGroupId(groupId).setSource(dest + "\\" + groupId).setSettings(super.session().getSettings());
+                Stager stager = new Stager().setGroupIds(Joiner.on(',').join(groupIds)).setSource(dest).setSettings(super.session().getSettings());
                 stager.execute();
-            }
         }
     }
 }

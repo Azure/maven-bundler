@@ -61,4 +61,47 @@ public class CommandRunner {
             executor.shutdown();
         }
     }
+
+    public String runCommandSilent(String command) throws MojoFailureException {
+        final StringBuilder ret = new StringBuilder();
+        boolean isWindows = System.getProperty("os.name")
+                .toLowerCase().startsWith("windows");
+        ProcessBuilder pBuilder = new ProcessBuilder();
+        if (isWindows) {
+            pBuilder.command("cmd.exe", "/c", command);
+        } else {
+            pBuilder.command("/bin/bash", "-c", command);
+        }
+        pBuilder.environment().put("PATH", System.getenv("PATH"));
+        pBuilder.directory(new File(session.getExecutionRootDirectory()));
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            final Process p = pBuilder.start();
+
+            // Consume the output
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    InputStream is = p.getInputStream();
+                    InputStreamReader isr = new InputStreamReader(is);
+                    BufferedReader br = new BufferedReader(isr);
+                    String line;
+                    try {
+                        while ((line = br.readLine()) != null) {
+                            ret.append(line).append('\n');
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+            p.waitFor();
+            return ret.toString();
+        } catch (IOException | InterruptedException e) {
+            throw new MojoFailureException(e.getMessage(), e);
+        } finally {
+            executor.shutdown();
+        }
+
+    }
 }
