@@ -14,7 +14,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Bundles all poms and jars with corresponding names.
@@ -46,6 +48,16 @@ public class Preparer extends AbstractMojo {
 
     @Parameter(property = "versionConfig")
     private String versionConfig;
+
+    private Map<String, String> versionMap = new HashMap<>();
+
+    public String getVersion(String artifactId) {
+        if (versionMap.isEmpty()) {
+            return version;
+        } else {
+            return versionMap.get(artifactId);
+        }
+    }
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -82,6 +94,7 @@ public class Preparer extends AbstractMojo {
                 String devVersion = info[3];
                 args.add(String.format("-Dproject.rel.%s:%s=%s -Dproject.dev.%s:%s=%s",
                         groupId, artifactId, version, groupId, artifactId, devVersion));
+                versionMap.put(artifactId, version);
             }
         } catch (IOException e) {
             throw new MojoFailureException(e.getMessage(), e);
