@@ -57,23 +57,33 @@ public class Bundler extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
 
         if (isSmbDest(dest)) {
-            String domain;
-            String user;
+            String specify = "Please specify %s for file share " + dest + ": ";
+            String domain = System.getenv("USERDOMAIN");
+            String user = System.getProperty("user.name");
             char[] password;
-            if (System.getProperty("domain") != null) {
-                domain = System.getProperty("domain");
-                user = System.getProperty("user");
+            if (domain == null) {
+                if (System.getProperty("domain") != null) {
+                    domain = System.getProperty("domain");
+                } else {
+                    System.out.print(String.format(specify, "domain"));
+                    domain = System.console().readLine();
+                    System.setProperty("domain", domain);
+                }
+            }
+            if (user == null) {
+                if (System.getProperty("user") != null) {
+                    user = System.getProperty("user");
+                } else {
+                    System.out.print(String.format(specify, "user"));
+                    user = System.console().readLine();
+                    System.setProperty("user", user);
+                }
+            }
+            if (System.getProperty("password") != null) {
                 password = System.getProperty("password").toCharArray();
             } else {
-                String specify = "Please specify `%s` for file share " + dest + ": ";
-                System.out.print(String.format(specify, "domain"));
-                domain = System.console().readLine();
-                System.out.print(String.format(specify, "user"));
-                user = System.console().readLine();
-                System.out.print(String.format(specify, "password"));
+                System.out.print(String.format(specify, domain + "\\" + user + "'s password"));
                 password = System.console().readPassword();
-                System.setProperty("domain", domain);
-                System.setProperty("user", user);
                 System.setProperty("password", new String(password));
             }
             transferManager = new SmbTransferManager(dest, project.getGroupId(), domain, user, password);

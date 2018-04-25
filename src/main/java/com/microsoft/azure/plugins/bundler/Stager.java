@@ -7,6 +7,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.settings.Settings;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,43 +16,45 @@ import java.util.HashMap;
 
 @Mojo(name = "stage", aggregator = true)
 public class Stager extends AbstractMojo {
+    @Parameter(defaultValue="${settings}", readonly=true, required=true)
+    private Settings settings;
 
-    @Parameter(property = "source")
-    private String source;
+    Stager setSettings(Settings settings) {
+        this.settings = settings;
+        return this;
+    }
+
+    @Parameter(property = "dest")
+    private String dest;
 
     Stager setSource(String source) {
-        this.source = source;
+        this.dest = source;
         return this;
     }
 
     @Parameter(property = "groupId")
-    private String groupId;
+    private String groupIds;
 
-    Stager setGroupId(String groupId) {
-        this.groupId = groupId;
+    Stager setGroupIds(String groupIds) {
+        this.groupIds = groupIds;
         return this;
     }
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        source = source.replace("smb://", "\\\\")
+        dest = dest.replace("smb://", "\\\\")
                 .replace("/", "\\");
-        if (!source.startsWith("\\\\")) {
-            throw new MojoFailureException("Must specify source as a network share or SMB path");
-        }
-
-        String jobName;
-        if (groupId.startsWith("com.microsoft.rest")) {
-            jobName = "publish-to-maven-com.microsoft.rest";
-        } else if (groupId.startsWith("com.microsoft.azure")) {
-            jobName = "publish-to-maven";
-        } else {
-            throw new MojoFailureException(String.format("Group ID '%s' is currently not supported", groupId));
+        if (!dest.startsWith("\\\\")) {
+            throw new MojoFailureException("Must specify dest as a network share or SMB path");
         }
 
         String username;
         String password;
-        if (System.getProperty("jenkinsUser") != null) {
+        if (settings.getServer("azuresdkci").getUsername() != null && settings.getServer("azuresdkci").getPassword() != null) {
+            username = settings.getServer("azuresdkci").getUsername();
+            password = settings.getServer("azuresdkci").getPassword();
+        }
+        else if (System.getProperty("jenkinsUser") != null) {
             username = System.getProperty("jenkinsUser");
             password = System.getProperty("jenkinsPassword");
         } else {
@@ -64,15 +67,28 @@ public class Stager extends AbstractMojo {
             System.setProperty("jenkinsPassword", password);
         }
 
-        try {
-            JenkinsServer jenkins = new JenkinsServer(new URI("http://azuresdkci.cloudapp.net"), username, password);
-            Job job = jenkins.getJob(jobName);
-            job.build(new HashMap<String, String>() {{
-                put("location", source);
-            }});
-            getLog().info(String.format("Job %s queue at %s.", jobName, job.getUrl()));
-        } catch (URISyntaxException | IOException e) {
-            throw new MojoFailureException(e.getMessage(), e);
+        for (final String groupId : groupIds.split(",")) {
+            try {
+                String jobName = getJobName(groupId);
+                JenkinsServer jenkins = new JenkinsServer(new URI("http://azuresdkci.cloudapp.net"), username, password);
+                Job job = jenkins.getJob(jobName);
+                job.build(new HashMap<String, String>() {{
+                    put("location", dest + "\\" + groupId);
+                }});
+                getLog().info(String.format("Job %s queue at %s.", jobName, job.getUrl()));
+            } catch (URISyntaxException | IOException e) {
+                throw new MojoFailureException(e.getMessage(), e);
+            }
+        }
+    }
+
+    private String getJobName(String groupId) throws MojoFailureException {
+        if (groupId.startsWith("com.microsoft.rest")) {
+            return "publish-to-maven-com.microsoft.rest";
+        } else if (groupId.startsWith("com.microsoft.azure")) {
+            return "publish-to-maven";
+        } else {
+            throw new MojoFailureException(String.format("Group ID '%s' is currently not supported", groupId));
         }
     }
 }
