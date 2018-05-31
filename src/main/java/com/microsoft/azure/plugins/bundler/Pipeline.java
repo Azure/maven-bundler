@@ -68,14 +68,14 @@ public class Pipeline extends Preparer {
             runner.runCommand("mvn clean source:jar javadoc:jar package -DskipTests");
 
             // Bundle
-            Bundler bundler = new Bundler().setProject(super.project()).setDest(dest).setVersion(getVersion(project().getArtifactId()));
+            Bundler bundler = new Bundler().setProject(super.project()).setDest(dest).setVersion(isSnapshot ? getVersion(project().getArtifactId()) : super.project().getVersion());
             bundler.execute();
             groupIds.add(super.project().getGroupId());
 
             for (MavenProject project : project().getCollectedProjects()) {
-                String version = getVersion(project.getArtifactId());
+                String version = isSnapshot ? getVersion(project.getArtifactId()) : project.getVersion();
                 if (version != null) {
-                    bundler = new Bundler().setProject(project).setDest(dest).setVersion(getVersion(project.getArtifactId()));
+                    bundler = new Bundler().setProject(project).setDest(dest).setVersion(version);
                     bundler.execute();
                     groupIds.add(project.getGroupId());
                 }
