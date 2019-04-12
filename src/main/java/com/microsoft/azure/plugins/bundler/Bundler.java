@@ -1,5 +1,6 @@
 package com.microsoft.azure.plugins.bundler;
 
+import com.microsoft.azure.plugins.bundler.io.AzureStorageTransferManager;
 import com.microsoft.azure.plugins.bundler.io.FileTransferManager;
 import com.microsoft.azure.plugins.bundler.io.LocalTransferManager;
 import com.microsoft.azure.plugins.bundler.io.SmbTransferManager;
@@ -9,6 +10,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.Settings;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -23,20 +25,36 @@ import java.nio.file.StandardCopyOption;
  */
 @Mojo(name = "bundle")
 public class Bundler extends AbstractMojo {
+    private static final String SERVER_ID = "azuresdkpartnerdrops";
 
     @Parameter(defaultValue="${project}", readonly=true, required=true)
     private MavenProject project;
+    @Parameter(defaultValue="${settings}", readonly=true, required=true)
+    private Settings settings;
+
+    Bundler setSettings(Settings settings) {
+        this.settings = settings;
+        return this;
+    }
 
     Bundler setProject(MavenProject project) {
         this.project = project;
         return this;
     }
 
-    @Parameter(property = "dest", defaultValue = "${session.executionRootDirectory}/output", required = true)
+    @Parameter(property = "dest", defaultValue = "${session.executionRootDirectory}/output")
     private String dest;
 
     Bundler setDest(String dest) {
         this.dest = dest;
+        return this;
+    }
+
+    @Parameter(property = "blobPath")
+    private String blobPath;
+
+    Bundler setBlobPath(String blobPath) {
+        this.blobPath = blobPath;
         return this;
     }
 
@@ -55,8 +73,17 @@ public class Bundler extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-
-        if (isSmbDest(dest)) {
+        if (blobPath != null) {
+            String accountName;
+            String accountKey;
+            if (settings.getServer(SERVER_ID).getUsername() != null && settings.getServer(SERVER_ID).getPassword() != null) {
+                accountName = settings.getServer(SERVER_ID).getUsername();
+                accountKey = settings.getServer(SERVER_ID).getPassword();
+            } else {
+                throw new MojoFailureException("Please set the account name and key for azuresdkpartnerdrops in your maven settings.xml");
+            }
+            transferManager = new AzureStorageTransferManager(accountName, accountKey, blobPath);
+        } else if (isSmbDest(dest)) {
             String specify = "Please specify %s for file share " + dest + ": ";
             String domain = System.getenv("USERDOMAIN");
             String user = System.getProperty("user.name");
