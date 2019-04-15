@@ -85,9 +85,11 @@ Will prepare the release with versions 1.3.1 and next development version 1.3.2-
 Whether you are doing a snapshot release or an official Maven Central release, you can run
 
 ```bash
-mvn clean source:jar javadoc:jar package -DskipTests
+mvn clean source:jar javadoc:jar package -DskipTests // or your own build command
 mvn com.microsoft.azure:bundler-maven-plugin:bundle -Dteam=fluent -Dproduct=network-2018-12-01
 ```
+
+Bundler will collect all the pom files and jar files and upload to `azuresdkpartnerdrops` storage account, excluding the files specified.
 
 Argument properties may be appended in `-Dargument=value` format.
 
@@ -96,6 +98,25 @@ Argument properties may be appended in `-Dargument=value` format.
 | `team` | **Required.** The name of the team for indexing purpose. Must be provided on the commandline or in `bundler.properties`. Commandline argument overrides value defined in `bundler.properties`.|
 | `product` | **Required.** The name of the product for indexing purpose. Must be provided on the commandline or in `bundler.properties`. Commandline argument overrides value defined in `bundler.properties`. |
 | `exclude` | *Optional.* A comma separated string containing exact matches or regex matches of built files to exclude from publishing to Maven. Can be provided on the commandline or in `bundler.properties`. Commandline argument overrides value defined in `bundler.properties`. |
+
+### Goal: auto
+
+Whether you are doing a snapshot release or an official Maven Central release, you can run
+
+```bash
+mvn com.microsoft.azure:bundler-maven-plugin:auto -Dteam=fluent -Dproduct=network-2018-12-01
+```
+
+Bundler will run `prepare`, a customizable `buildCmd`, and then `bundle`.
+
+Argument properties may be appended in `-Dargument=value` format.
+
+| Property | Description |
+|----------|-------------|
+| `team` | **Required.** The name of the team for indexing purpose. Must be provided on the commandline or in `bundler.properties`. Commandline argument overrides value defined in `bundler.properties`.|
+| `product` | **Required.** The name of the product for indexing purpose. Must be provided on the commandline or in `bundler.properties`. Commandline argument overrides value defined in `bundler.properties`. |
+| `exclude` | *Optional.* A comma separated string containing exact matches or regex matches of built files to exclude from publishing to Maven. Can be provided on the commandline or in `bundler.properties`. Commandline argument overrides value defined in `bundler.properties`. |
+| `buildCmd` | *Optional.* A build command for Maven to build all the artifacts. Default value is `clean source:jar javadoc:jar package -DskipTests`. Can be provided on the commandline or in `bundler.properties`. Commandline argument overrides value defined in `bundler.properties`. |
 
 ## Legacy
 
