@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * Bundles all poms and jars with corresponding names.
@@ -36,9 +37,6 @@ public class Preparer extends AbstractMojo {
     MavenProject project() {
         return project;
     }
-
-    @Parameter(property = "tag")
-    private String tag;
 
     @Parameter(property = "version")
     private String version;
@@ -63,9 +61,8 @@ public class Preparer extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (!project.getVersion().endsWith("-SNAPSHOT")) {
             throw new MojoFailureException("Prepare goal can only be run for SNAPSHOT projects");
-        } else if (tag == null) {
-            throw new MojoFailureException("Argument `tag` must be provided");
         }
+        String tag = "v" + version;
         CommandRunner runner = new CommandRunner(this, session);
         String prepareCmd = "mvn -B release:prepare -DpushChanges=false -Darguments=\"-DskipTests=true\" -Dresume=false";
         prepareCmd = prepareCmd + " -Dtag=" + tag;
