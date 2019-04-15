@@ -26,6 +26,9 @@ public class Pipeline extends Preparer {
     @Parameter(property = "exclude")
     private String excludedFiles;
 
+    @Parameter(property = "buildCmd")
+    private String buildCmd;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         boolean isSnapshot = project().getVersion().endsWith("-SNAPSHOT");
@@ -55,12 +58,18 @@ public class Pipeline extends Preparer {
             if (excludedFiles == null) {
                 excludedFiles = properties.getProperty("exclude");
             }
+            if (buildCmd == null) {
+                buildCmd = properties.getProperty("buildCmd");
+            }
         } catch (IOException e) {
             // ignore
         }
 
         if (team == null || product == null) {
             throw new MojoFailureException("Missing property 'team' and 'product'.");
+        }
+        if (buildCmd == null) {
+            buildCmd = "clean source:jar javadoc:jar package -DskipTests";
         }
 
         Bundler bundler = new Bundler()
@@ -74,7 +83,7 @@ public class Pipeline extends Preparer {
 
         try {
             // Package
-            runner.runCommand("mvn clean source:jar javadoc:jar package -DskipTests");
+            runner.runCommand("mvn " + buildCmd);
 
             // Bundle
             bundler.execute();
