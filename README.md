@@ -10,7 +10,7 @@ myproject-0.0.1-sources.jar
 myproject-0.0.1-javadoc.jar
 ```
 
-This plugin aims to provide integration with Maven release plugin and to bundle these artifacts in a user designated output directory.
+This plugin aims to provide integration with Maven release plugin and to bundle these artifacts in `azuresdkpartnerdrops` storage account.
 
 ## How to use
 

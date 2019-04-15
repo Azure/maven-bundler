@@ -151,7 +151,8 @@ public class Bundler extends AbstractMojo {
                 }
             }
 
-            getLog().info("============== Uploaded to blob path " + blobPath + " =============");
+            getLog().info("============== Uploaded to blob path " + blobPath.replace("\\", "/") + " =============");
+            getLog().info("============== Now you can run pipeline https://dev.azure.com/azure-sdk/internal/_release?definitionId=6 =============");
         } catch (IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
