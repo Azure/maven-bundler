@@ -1,25 +1,30 @@
 package com.microsoft.azure.plugins.bundler;
 
-import com.google.common.base.Joiner;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 @Mojo(name = "auto", aggregator = true)
 public class Pipeline extends Preparer {
-    @Parameter(property = "blobPath")
-    private String blobPath;
+    @Parameter(property = "properties", defaultValue = "${session.executionRootDirectory}/bundler.properties")
+    private String propertiesFile;
 
-    @Parameter(property = "dest", defaultValue = "${session.executionRootDirectory}/output")
-    private String dest;
+    @Parameter(property = "team")
+    private String team;
 
-    @Parameter(property = "stage", defaultValue = "false")
-    private boolean stage;
+    @Parameter(property = "product")
+    private String product;
+
+    @Parameter(property = "exclude")
+    private String excludedFiles;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -36,41 +41,36 @@ public class Pipeline extends Preparer {
 
         Set<String> groupIds = new HashSet<>();
 
-        Bundler bundler = new Bundler().setProject(super.project()).setSettings(super.session().getSettings()).setVersion(isSnapshot ? getVersion(project().getArtifactId()) : super.project().getVersion());
-        if (blobPath != null) {
-            bundler.setBlobPath(blobPath);
-        } else {
-            String specify = "Please specify %s for file share " + dest + ": ";
-            String domain = System.getenv("USERDOMAIN");
-            String user = System.getProperty("user.name");
-            char[] password;
-            if (domain == null) {
-                if (System.getProperty("domain") != null) {
-                    domain = System.getProperty("domain");
-                } else {
-                    System.out.print(String.format(specify, "domain"));
-                    domain = System.console().readLine();
-                    System.setProperty("domain", domain);
-                }
+        System.out.println("Property file is " + propertiesFile);
+
+        Properties properties = new Properties();
+        try {
+            properties.load(new FileInputStream(propertiesFile));
+            if (team == null) {
+                team = properties.getProperty("team");
             }
-            if (user == null) {
-                if (System.getProperty("user") != null) {
-                    user = System.getProperty("user");
-                } else {
-                    System.out.print(String.format(specify, "user"));
-                    user = System.console().readLine();
-                    System.setProperty("user", user);
-                }
+            if (product == null) {
+                product = properties.getProperty("product");
             }
-            if (System.getProperty("password") != null) {
-                password = System.getProperty("password").toCharArray();
-            } else {
-                System.out.print(String.format(specify, domain + "\\" + user + "'s password"));
-                password = System.console().readPassword();
-                System.setProperty("password", new String(password));
+            if (excludedFiles == null) {
+                excludedFiles = properties.getProperty("exclude");
             }
-            bundler.setDest(dest);
+        } catch (IOException e) {
+            // ignore
         }
+
+        if (team == null || product == null) {
+            throw new MojoFailureException("Missing property 'team' and 'product'.");
+        }
+
+        Bundler bundler = new Bundler()
+                .setProject(super.project())
+                .setSettings(super.session().getSettings())
+                .setPropertiesFile(propertiesFile)
+                .setVersion(isSnapshot ? getVersion(project().getArtifactId()) : super.project().getVersion())
+                .setTeam(team)
+                .setProduct(product)
+                .setExcludedFiles(excludedFiles);
 
         try {
             // Package
@@ -83,7 +83,14 @@ public class Pipeline extends Preparer {
             for (MavenProject project : project().getCollectedProjects()) {
                 String version = isSnapshot ? getVersion(project.getArtifactId()) : project.getVersion();
                 if (version != null) {
-                    bundler = new Bundler().setProject(project).setDest(dest).setVersion(version);
+                    bundler = new Bundler()
+                            .setProject(project)
+                            .setSettings(super.session().getSettings())
+                            .setPropertiesFile(propertiesFile)
+                            .setTeam(team)
+                            .setProduct(product)
+                            .setVersion(version)
+                            .setExcludedFiles(excludedFiles);
                     bundler.execute();
                     groupIds.add(project.getGroupId());
                 }
@@ -94,12 +101,6 @@ public class Pipeline extends Preparer {
                 // Checkout HEAD
                 runner.runCommand("git checkout -");
             }
-        }
-
-        //Stage
-        if (stage) {
-            Stager stager = new Stager().setGroupIds(Joiner.on(',').join(groupIds)).setSource(dest).setSettings(super.session().getSettings());
-            stager.execute();
         }
     }
 }

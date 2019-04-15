@@ -67,11 +67,6 @@
       <version>0.9.1</version>
     </dependency>
     <dependency>
-      <groupId>com.offbytwo.jenkins</groupId>
-      <artifactId>jenkins-client</artifactId>
-      <version>0.3.8</version>
-    </dependency>
-    <dependency>
       <groupId>com.microsoft.azure</groupId>
       <artifactId>azure-storage-blob</artifactId>
       <version>11.0.0</version>
