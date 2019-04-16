@@ -17,7 +17,7 @@ This plugin aims to provide integration with Maven release plugin and to bundle 
 ### One time set ups
 
 1. Request access to the [Azure SDK Partners](https://idweb/identitymanagement/aspx/groups/MyGroups.aspx?popupFromClipboard=https%3A%2F%2Fidweb%2Fidentitymanagement%2Faspx%2FGroups%2FEditGroup.aspx%3Fid%3D319a0a39-4c37-4791-ada5-2b390fedac52) security group. 
-2. Find the access key to storage account `azuresdkpartnerdrops` here: https://ms.portal.azure.com/#@72f988bf-86f1-41af-91ab-2d7cd011db47/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/AzureSDKEng/providers/Microsoft.KeyVault/vaults/azuresdkpartnerdrops-kv/secrets.
+2. Follow [this documentation](https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki?wikiVersion=GBwikiMaster&pagePath=%2FPartner%20Release%20Pipelines&pageId=1) to find the access key to storage account `azuresdkpartnerdrops` in the key vault.
 3. Add this snippet to your maven settings.xml:
 
 ```xml
