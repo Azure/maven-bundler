@@ -29,6 +29,9 @@ public class Pipeline extends Preparer {
     @Parameter(property = "buildCmd")
     private String buildCmd;
 
+    @Parameter(property = "pomFile")
+    private String pomFile;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         boolean isSnapshot = project().getVersion().endsWith("-SNAPSHOT");
@@ -79,7 +82,8 @@ public class Pipeline extends Preparer {
                 .setVersion(isSnapshot ? getVersion(project().getArtifactId()) : super.project().getVersion())
                 .setTeam(team)
                 .setProduct(product)
-                .setExcludedFiles(excludedFiles);
+                .setExcludedFiles(excludedFiles)
+                .setPomFile(pomFile);
 
         try {
             // Package
