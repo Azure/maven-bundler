@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -87,6 +88,14 @@ public class Bundler extends AbstractMojo {
         return this;
     }
 
+    @Parameter(property = "pomFile")
+    private String pomFile;
+
+    Bundler setPomFile(String pomFile) {
+        this.pomFile = pomFile;
+        return this;
+    }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         Properties properties = new Properties();
@@ -100,6 +109,9 @@ public class Bundler extends AbstractMojo {
             }
             if (excludedFiles == null) {
                 excludedFiles = properties.getProperty("exclude");
+            }
+            if (pomFile == null) {
+                pomFile = properties.getProperty("pomFile");
             }
         } catch (IOException e) {
             // ignore
@@ -127,7 +139,14 @@ public class Bundler extends AbstractMojo {
         }
         FileTransferManager transferManager = new AzureStorageTransferManager(accountName, accountKey, blobPath);
 
-        Path pomLocation = Paths.get(project.getBasedir().getPath(), "pom.xml");
+        pomFile = (pomFile == null) ? "pom.xml" : pomFile;
+        Path pomLocation = Paths.get(pomFile);
+        if (!pomLocation.isAbsolute()) {
+            pomLocation = Paths.get(project.getBasedir().getPath(), pomFile);
+        }
+        if (!Files.exists(pomLocation)) {
+            throw new MojoFailureException(String.format("POM file not found at '%s'.", pomLocation));
+        }
         File[] artifacts = new File(project.getBasedir(), "target").listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
